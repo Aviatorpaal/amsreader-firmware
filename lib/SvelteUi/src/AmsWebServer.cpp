@@ -315,7 +315,7 @@ void AmsWebServer::sysinfoJson() {
 		ui.showTemperaturePlot,
 		webConfig.security,
 		#if defined(ESP32)
-		rtc_get_reset_reason(0),
+		esp_rom_get_reset_reason(0),
 		0,
 		#else
 		ESP.getResetInfoPtr()->reason,

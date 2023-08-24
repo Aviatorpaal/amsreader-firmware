@@ -4,10 +4,12 @@ void HwTools::setup(GpioConfig* config, AmsConfiguration* amsConf) {
     this->config = config;
     this->amsConf = amsConf;
     this->tempSensorInit = false;
+    /*
     if(sensorApi != NULL)
         delete sensorApi;
     if(oneWire != NULL)
         delete oneWire;
+    */
     if(config->tempSensorPin > 0 && config->tempSensorPin < 40) {
         pinMode(config->tempSensorPin, INPUT);
     } else {
@@ -40,15 +42,13 @@ void HwTools::setup(GpioConfig* config, AmsConfiguration* amsConf) {
         #elif defined(ESP32)
             getAdcChannel(config->vccPin, voltAdc);
             if(voltAdc.unit != 0xFF) {
-                if(voltAdc.unit == ADC_UNIT_1) {
-                    voltAdcChar = (esp_adc_cal_characteristics_t*) calloc(1, sizeof(esp_adc_cal_characteristics_t));
-                    esp_adc_cal_value_t adcVal = esp_adc_cal_characterize((adc_unit_t) voltAdc.unit, ADC_ATTEN_DB_6, ADC_WIDTH_BIT_12, 1100, voltAdcChar);
-                    adc1_config_channel_atten((adc1_channel_t) voltAdc.channel, ADC_ATTEN_DB_6);
-                } else if(voltAdc.unit == ADC_UNIT_2) {
-                    voltAdcChar = (esp_adc_cal_characteristics_t*) calloc(1, sizeof(esp_adc_cal_characteristics_t));
-                    esp_adc_cal_value_t adcVal = esp_adc_cal_characterize((adc_unit_t) voltAdc.unit, ADC_ATTEN_DB_6, ADC_WIDTH_BIT_12, 1100, voltAdcChar);
-                    adc2_config_channel_atten((adc2_channel_t) voltAdc.channel, ADC_ATTEN_DB_6);
-                }
+                adc_cali_curve_fitting_config_t conf = {
+                    voltAdc.unit == 1 ? ADC_UNIT_1 : ADC_UNIT_2,
+                    (adc_channel_t) voltAdc.channel,
+                    ADC_ATTEN_DB_6, 
+                    ADC_BITWIDTH_12
+                };
+                adc_cali_create_scheme_curve_fitting(&conf, &voltAdcChar);
             }
         #else
             pinMode(config->vccPin, INPUT);
@@ -233,8 +233,9 @@ float HwTools::getVcc() {
                     }
                 }
                 x = x / 10;
-                uint32_t voltage = esp_adc_cal_raw_to_voltage(x, voltAdcChar);
-                volts = voltage / 1000.0;
+                int* voltage;
+                adc_cali_raw_to_voltage(voltAdcChar, analogRead(config->vccPin), voltage);
+                volts = *voltage / 1000.0;
             } else {
                 uint32_t x = 0;
                 for (int i = 0; i < 10; i++) {
@@ -279,6 +280,7 @@ TempSensorData* HwTools::getTempSensorData(uint8_t i) {
 
 bool HwTools::updateTemperatures() {
     if(config->tempSensorPin != 0xFF) {
+        /*
         if(!tempSensorInit) {
             oneWire = new OneWire(config->tempSensorPin);
             sensorApi = new DallasTemperature(this->oneWire);
@@ -337,6 +339,7 @@ bool HwTools::updateTemperatures() {
         }
 
         return true;
+        */
     }
     return false;
 }
@@ -352,7 +355,7 @@ float HwTools::getTemperature() {
     uint8_t c = 0;
     float ret = 0;
     float analogTemp = getTemperatureAnalog();
-    if(analogTemp != DEVICE_DISCONNECTED_C) {
+    if(analogTemp != -127) {
         ret += analogTemp;
         c++;
     }
@@ -364,7 +367,7 @@ float HwTools::getTemperature() {
             c++;
         }
     }
-    return c == 0 ? DEVICE_DISCONNECTED_C : ret/c;
+    return c == 0 ? -127 : ret/c;
 }
 float HwTools::getTemperatureAnalog() {
     if(config->tempAnalogSensorPin != 0xFF) {
@@ -372,7 +375,7 @@ float HwTools::getTemperatureAnalog() {
         int volts = ((float) analogRead(config->tempAnalogSensorPin) / analogRange) * 3.3;
         return ((volts * adcCalibrationFactor) - 0.4) / 0.0195;
     }
-    return DEVICE_DISCONNECTED_C;
+    return -127;
 }
 
 int HwTools::getWifiRssi() {

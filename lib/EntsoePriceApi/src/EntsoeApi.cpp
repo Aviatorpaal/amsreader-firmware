@@ -4,6 +4,7 @@
 #include "TimeLib.h"
 #include "DnbCurrParser.h"
 #include "FirmwareVersion.h"
+#include "lwip/def.h"
 
 #include "GcmParser.h"
 

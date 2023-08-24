@@ -8,12 +8,14 @@
 #elif defined(ESP32)
 #include <WiFi.h>
 #include <driver/adc.h>
-#include <esp_adc_cal.h>
+#include <esp_adc/adc_cali.h>
+#include <esp_adc/adc_cali_scheme.h>
+//#include <esp_adc_cal.h>
 #include <soc/adc_channel.h>
 #endif
 
-#include <DallasTemperature.h>
-#include <OneWire.h>
+//#include <DallasTemperature.h>
+//#include <OneWire.h>
 #include "AmsConfiguration.h"
 
 #define LED_INTERNAL 0
@@ -54,13 +56,13 @@ private:
     uint16_t analogRange = 1024;
     AdcConfig voltAdc, tempAdc;
     #if defined(ESP32)
-        esp_adc_cal_characteristics_t* voltAdcChar, tempAdcChar;
+        adc_cali_handle_t voltAdcChar, tempAdcChar;
     #endif
     GpioConfig* config;
     AmsConfiguration* amsConf;
     bool tempSensorInit;
-    OneWire *oneWire = NULL;
-    DallasTemperature *sensorApi = NULL;
+    //OneWire *oneWire = NULL;
+    //DallasTemperature *sensorApi = NULL;
     uint8_t sensorCount = 0;
     TempSensorData** tempSensors = NULL;
 

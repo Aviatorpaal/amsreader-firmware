@@ -425,7 +425,12 @@ void setup() {
 	ws.setup(&config, &gpioConfig, &meterConfig, &meterState, &ds, &ea);
 
 	#if defined(ESP32)
-		esp_task_wdt_init(WDT_TIMEOUT, true);
+		esp_task_wdt_config_t conf = {
+			WDT_TIMEOUT,
+			1,
+			true
+		};
+		esp_task_wdt_init(&conf);
  		esp_task_wdt_add(NULL);
     #elif defined(ESP8266)
 		ESP.wdtEnable(WDT_TIMEOUT * 1000);

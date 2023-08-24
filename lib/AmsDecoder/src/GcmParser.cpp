@@ -116,12 +116,13 @@ int8_t GCMParser::parse(uint8_t *d, DataParserContext &ctx) {
                 return GCM_DECRYPT_FAILED;
             }
         } else {
-            success = mbedtls_gcm_starts(&m_ctx, MBEDTLS_GCM_DECRYPT, initialization_vector, sizeof(initialization_vector),NULL, 0);
+            success = mbedtls_gcm_starts(&m_ctx, MBEDTLS_GCM_DECRYPT, initialization_vector, sizeof(initialization_vector));
             if (0 != success) {
                 mbedtls_gcm_free(&m_ctx);
                 return GCM_DECRYPT_FAILED;
             }
-            success = mbedtls_gcm_update(&m_ctx, sizeof(cipher_text), cipher_text, (unsigned char*)(ptr));
+            size_t* resultinglength;
+            success = mbedtls_gcm_update(&m_ctx, (unsigned char*)(ptr), sizeof(cipher_text), cipher_text, sizeof(cipher_text), resultinglength);
             if (0 != success) {
                 mbedtls_gcm_free(&m_ctx);
                 return GCM_DECRYPT_FAILED;
