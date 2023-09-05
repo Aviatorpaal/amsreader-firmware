@@ -199,6 +199,7 @@ void WiFiEvent(WiFiEvent_t event, WiFiEventInfo_t info) {
 }
 #endif
 
+LowVccInfo lowVccInfo = {3300, 0};
 
 void setup() {
 	Serial.begin(115200);
@@ -422,7 +423,14 @@ void setup() {
 	ea.setup(&ds, eac);
 	ea.load();
 	ea.setEapi(eapi);
-	ws.setup(&config, &gpioConfig, &meterConfig, &meterState, &ds, &ea);
+	
+	config.getLowVcc(lowVccInfo);
+	if(lowVccInfo.vcc < 2000 || lowVccInfo.vcc > 3300) {
+		lowVccInfo.vcc = 3300;
+		lowVccInfo.ts = 0;
+	}
+
+	ws.setup(&config, &gpioConfig, &meterConfig, &meterState, &ds, &ea, &lowVccInfo);
 
 	#if defined(ESP32)
 		esp_task_wdt_init(WDT_TIMEOUT, true);
@@ -607,6 +615,16 @@ void loop() {
 		debugW_P(PSTR("Used %dms to feed WDT"), end-start);
 	}
 
+	if(end-now < 100) {
+		float vcc = hw.getVcc();
+		if(vcc < lowVccInfo.vcc / 1000.0) {
+			lowVccInfo.vcc = vcc * 1000;
+			lowVccInfo.ts = time(nullptr);
+			config.setLowVcc(lowVccInfo);
+		}
+	}
+
+	end = millis();
 	if(end-now > 2000) {
 		debugW_P(PSTR("loop() used %dms"), end-now);
 	}

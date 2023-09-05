@@ -3,7 +3,7 @@
 #include <EEPROM.h>
 #include "Arduino.h"
 
-#define EEPROM_SIZE 1024*3
+#define EEPROM_SIZE (1024*3)
 #define EEPROM_CHECK_SUM 103 // Used to check if config is stored. Change if structure changes
 #define EEPROM_CLEARED_INDICATOR 0xFC
 #define EEPROM_CONFIG_ADDRESS 0
@@ -23,6 +23,7 @@
 #define CONFIG_NTP_START 872
 #define CONFIG_MQTT_START 1004
 #define CONFIG_HA_START 1680
+#define CONFIG_LOW_VCC (EEPROM_SIZE-16)
 
 #define CONFIG_METER_START_93 224
 
@@ -222,6 +223,11 @@ struct UpgradeInformation {
 	int16_t errorCode;
 }; // 20
 
+struct LowVccInfo {
+	uint16_t vcc;
+	time_t ts;
+};
+
 class AmsConfiguration {
 public:
 	bool hasConfig();
@@ -310,6 +316,9 @@ public:
 	bool getUpgradeInformation(UpgradeInformation&);
 	bool setUpgradeInformation(int16_t exitCode, int16_t errorCode, const char* currentVersion, const char* nextVersion);
 	void clearUpgradeInformation(UpgradeInformation&);
+
+	void setLowVcc(LowVccInfo&);
+	void getLowVcc(LowVccInfo&);
 
 	void clear();
 

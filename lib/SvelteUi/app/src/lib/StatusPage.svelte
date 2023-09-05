@@ -73,6 +73,13 @@
       }
     }
 
+    async function resetLowVcc() {
+        const response = await fetch('/reset-low-vcc', {
+            method: 'POST'
+        });
+        let res = (await response.json())
+    }
+
     let firmwareFileInput;
     let firmwareFiles = [];
     let firmwareUploading = false;
@@ -97,13 +104,14 @@
             MAC: {sysinfo.mac}
         </div>
         {#if sysinfo.apmac && sysinfo.apmac != sysinfo.mac}
-        <div class="my-2">
-            AP MAC: {sysinfo.apmac}
-        </div>
+            <div class="my-2">
+                AP MAC: {sysinfo.apmac}
+            </div>
+        {/if}
         <div class="my-2">
             Last boot:
             {#if data.u > 0}
-            <Clock timestamp={new Date(new Date().getTime() - (data.u * 1000))} fullTimeColor="" />
+            <Clock timestamp={new Date(new Date().getTime() - (data.u * 1000))} offset={sysinfo.clock_offset} fullTimeColor="" />
             {:else}
             -
             {/if}
@@ -111,6 +119,11 @@
         <div class="my-2">
             Reason: {getResetReason(sysinfo)} ({sysinfo.boot_reason}/{sysinfo.ex_cause})
         </div>
+        {#if data.lv > 2.0 && data.lv < 3.3}
+            <div class="my-2">
+                Low vcc: {data.lv.toFixed(2)+"V"} (<Clock timestamp={ data.lvt ? new Date(data.lvt * 1000) : new Date(0) } offset={sysinfo.clock_offset} fullTimeColor="" />)<br/>
+                <button on:click={resetLowVcc} class="text-xs py-1 px-2 rounded bg-blue-500 text-white mr-3">Clear low vcc</button>
+            </div>
         {/if}
         <div class="my-2">
             <Link to="/consent">

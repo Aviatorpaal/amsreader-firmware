@@ -729,6 +729,19 @@ void AmsConfiguration::clearUpgradeInformation(UpgradeInformation& upinfo) {
 	memset(upinfo.toVersion, 0, 8);
 }
 
+void AmsConfiguration::setLowVcc(LowVccInfo &info) {
+	EEPROM.begin(EEPROM_SIZE);
+	EEPROM.put(CONFIG_LOW_VCC, info);
+	EEPROM.end();
+}
+
+void AmsConfiguration::getLowVcc(LowVccInfo &info) {
+	EEPROM.begin(EEPROM_SIZE);
+	EEPROM.get(CONFIG_LOW_VCC, info);
+	EEPROM.end();
+}
+
+
 
 void AmsConfiguration::clear() {
 	EEPROM.begin(EEPROM_SIZE);

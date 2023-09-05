@@ -32,7 +32,7 @@
 class AmsWebServer {
 public:
 	AmsWebServer(uint8_t* buf, RemoteDebug* Debug, HwTools* hw);
-    void setup(AmsConfiguration*, GpioConfig*, MeterConfig*, AmsData*, AmsDataStorage*, EnergyAccounting*);
+    void setup(AmsConfiguration*, GpioConfig*, MeterConfig*, AmsData*, AmsDataStorage*, EnergyAccounting*, LowVccInfo*);
     void loop();
 	void setMqtt(MQTTClient* mqtt);
 	void setTimezone(Timezone* tz);
@@ -54,6 +54,7 @@ private:
 	AmsData* meterState;
 	AmsDataStorage* ds;
     EnergyAccounting* ea = NULL;
+	LowVccInfo* lowVccInfo = NULL;
 	MQTTClient* mqtt = NULL;
 	bool uploading = false;
 	File file;
@@ -115,6 +116,8 @@ private:
 	void notFound();
 	void redirectToMain();
 	void robotstxt();
+
+	void resetLowVcc();
 };
 
 #endif

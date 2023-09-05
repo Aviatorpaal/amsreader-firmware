@@ -54,13 +54,14 @@ AmsWebServer::AmsWebServer(uint8_t* buf, RemoteDebug* Debug, HwTools* hw) {
 	this->buf = (char*) buf;
 }
 
-void AmsWebServer::setup(AmsConfiguration* config, GpioConfig* gpioConfig, MeterConfig* meterConfig, AmsData* meterState, AmsDataStorage* ds, EnergyAccounting* ea) {
+void AmsWebServer::setup(AmsConfiguration* config, GpioConfig* gpioConfig, MeterConfig* meterConfig, AmsData* meterState, AmsDataStorage* ds, EnergyAccounting* ea, LowVccInfo* lowVccInfo) {
     this->config = config;
 	this->gpioConfig = gpioConfig;
 	this->meterConfig = meterConfig;
 	this->meterState = meterState;
 	this->ds = ds;
 	this->ea = ea;
+	this->lowVccInfo = lowVccInfo;
 
 	server.on(F("/"), HTTP_GET, std::bind(&AmsWebServer::indexHtml, this));
 	snprintf_P(buf, 32, PSTR("/index-%s.js"), FirmwareVersion::VersionString);
@@ -96,6 +97,7 @@ void AmsWebServer::setup(AmsConfiguration* config, GpioConfig* gpioConfig, Meter
 	server.on(F("/is-alive"), HTTP_GET, std::bind(&AmsWebServer::isAliveCheck, this));
 
 	server.on(F("/reset"), HTTP_POST, std::bind(&AmsWebServer::factoryResetPost, this));
+	server.on(F("/reset-low-vcc"), HTTP_POST, std::bind(&AmsWebServer::resetLowVcc, this));
 
 	server.on(F("/robots.txt"), HTTP_GET, std::bind(&AmsWebServer::robotstxt, this));
 
@@ -455,6 +457,8 @@ void AmsWebServer::dataJson() {
 		meterState->getL2PowerFactor(),
 		meterState->getL3PowerFactor(),
 		vcc,
+		lowVccInfo == NULL ? -1 : (float) (lowVccInfo->vcc / 1000.0),
+		lowVccInfo == NULL ? 0 : (uint32_t) lowVccInfo->ts,
 		rssi,
 		hw->getTemperature(),
 		(uint32_t) (millis / 1000),
@@ -2237,4 +2241,11 @@ void AmsWebServer::configFileUpload() {
 void AmsWebServer::redirectToMain() {
 	server.sendHeader(HEADER_LOCATION,F("/"));
 	server.send(302);
+}
+
+void AmsWebServer::resetLowVcc() {
+	lowVccInfo->vcc = 3300;
+	lowVccInfo->ts = 0;
+	config->setLowVcc(*lowVccInfo);
+	server.send(200);
 }
